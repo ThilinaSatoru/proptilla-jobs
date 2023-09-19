@@ -11,7 +11,8 @@ type Job = {
 };
 
 export default async function Table() {
-  const response = await fetch("https://proptilla.cosmoforge.com/api/v1/jobs");
+  
+  const response = await fetch(process.env.API_URL + "/api/v1/jobs");
   const jobs: Job[] = await response.json();
   console.log(JSON.stringify(jobs));
 
