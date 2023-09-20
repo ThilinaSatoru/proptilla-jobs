@@ -1,27 +1,21 @@
 "use client";
 import Select from "react-select";
-import { useState } from "react";
-import { MdCancelScheduleSend } from "react-icons/md";
+import {useState} from "react";
+import {MdCancelScheduleSend} from "react-icons/md";
+import {City} from "@/app/core/dto/City";
+
+const optiones = [
+  { value: 'chocolate', label: 'Chocolate' },
+  { value: 'strawberry', label: 'Strawberry' },
+  { value: 'vanilla', label: 'Vanilla' },
+];
+
 
 export default function Create() {
   const [modal, setModal] = useState(false);
-  const [warna, setWarna] = useState([]);
-  const [ukuran, setUkuran] = useState([]);
-  const optionsWarna = [
-    { value: "biru", label: "Biru" },
-    { value: "kuning", label: "Kuning" },
-    { value: "hijau", label: "Hijau" },
-    { value: "cokelat", label: "Cokelat" },
-    { value: "merah", label: "Merah" },
-  ];
-
-  const optionsUkuran = [
-    { value: "S", label: "S" },
-    { value: "M", label: "M" },
-    { value: "L", label: "L" },
-    { value: "XL", label: "XL" },
-    { value: "XXL", label: "XXL" },
-  ];
+  const [warna, setWarna] = useState<{ value: string, label: string }[]>();
+  const [cities, setCities] = useState<City[]>([])
+  const options: { value: string, label: string }[] = []
 
   const handleWarnaChange = async (selected: any, selectaction: any) => {
     const { action } = selectaction;
@@ -34,12 +28,25 @@ export default function Create() {
     setWarna(selected);
   };
 
-  const handleUkuranChange = async (selected: any, selectaction: any) => {
-    // const { action } = selectaction;
-    setUkuran(selected);
-  };
+  async function loadOptions() {
+    fetch("http://localhost:8081/api/v1/cities")
+        .then((res) => res.json())
+        .then((data) => {
+
+          setCities(data as City[])
+          cities.forEach(city=>{
+            options.push({ value: city.name, label: city.code })
+          })
+
+        })
+  }
+
   function handleChange() {
     setModal(!modal);
+
+    loadOptions().then(r => {
+      console.log(options)
+    })
   }
 
   return (
@@ -63,9 +70,10 @@ export default function Create() {
       <div className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg">Heloo</h3>
+
           <form action="">
             <div className="form-control">
-              <label htmlFor="" className="label font-bold">
+              <label htmlFor="name" className="label font-bold">
                 Name
               </label>
               <input
@@ -75,43 +83,45 @@ export default function Create() {
                 className="input w-full input-bordered"
               />
             </div>
-
             <div className="form-control">
-              <label htmlFor="" className="label font-bold">
-                Name
+              <label htmlFor="JobClass" className="label font-bold">
+                JobClass
               </label>
               <input
                 type="text"
-                name="firstname"
+                name="JobClass"
+                id="JobClass"
                 className="border w-full px-5 py-3 focus:outline-none rounded-md"
-                placeholder="FirstName"
+                placeholder="JobClass"
+              />
+            </div>
+            <div className="form-control">
+              <label htmlFor="cron" className="label font-bold">
+                CRON
+              </label>
+              <input
+                type="text"
+                name="cron"
+                id="cron"
+                className="border w-full px-5 py-3 focus:outline-none rounded-md"
+                placeholder="schedule"
+              />
+            </div>
+            <div className="form-control">
+              <label htmlFor="website" className="label font-bold">
+                Website
+              </label>
+              <input
+                type="text"
+                name="website"
+                id="website"
+                className="border w-full px-5 py-3 focus:outline-none rounded-md"
+                placeholder="website"
               />
             </div>
             <div className="form-control">
               <label htmlFor="" className="label font-bold">
-                Name
-              </label>
-              <input
-                type="text"
-                name="firstname"
-                className="border w-full px-5 py-3 focus:outline-none rounded-md"
-                placeholder="LastName"
-              />
-            </div>
-            <div className="form-control">
-              <label htmlFor="" className="label font-bold">
-                Name
-              </label>
-              <input
-                type="text"
-                name="email"
-                className="border w-full px-5 py-3 focus:outline-none rounded-md"
-                placeholder="Email"
-              />
-            </div>
-            <div className="form-control">
-              <label htmlFor="" className="label font-bold">
-                Name
+                Cities
               </label>
               <Select
                 id="selectWarna"
@@ -120,7 +130,7 @@ export default function Create() {
                 name="colors"
                 className="basic-multi-select"
                 classNamePrefix="select"
-                options={optionsWarna}
+                options={options}
                 onChange={handleWarnaChange}
                 placeholder="Pilih Warna"
               />
@@ -158,7 +168,6 @@ export default function Create() {
                 </label>
               </div>
             </div>
-
             <div className="modal-action">
               <button type="button" className="btn" onClick={handleChange}>
                 Close
@@ -168,6 +177,7 @@ export default function Create() {
               </button>
             </div>
           </form>
+
         </div>
       </div>
     </div>

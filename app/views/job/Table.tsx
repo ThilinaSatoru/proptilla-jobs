@@ -1,20 +1,11 @@
-import { BiEdit, BiTrashAlt } from "react-icons/bi";
-
-type Job = {
-  id: number;
-  name: string;
-  jobClass: string;
-  cron: string;
-  active: boolean;
-  createdOn: Date;
-  lastExecutedOn: Date;
-};
+import {BiEdit, BiTrashAlt} from "react-icons/bi";
+import {Job} from "@/app/core/dto/Job";
 
 export default async function Table() {
   
   const response = await fetch(process.env.API_URL + "/api/v1/jobs");
   const jobs: Job[] = await response.json();
-  console.log(JSON.stringify(jobs));
+  // console.log(JSON.stringify(jobs));
 
   return (
     <table className="min-w-full table-auto">
@@ -63,8 +54,8 @@ export default async function Table() {
             </td>
             <td className="px-16 py-2">
               <button className="cursor">
-                <span className="bg-green-500 text-white px-5 py-1 rounded-full">
-                  Active
+                <span className={`${job.active ? 'bg-green-500' : 'bg-rose-500'} text-white px-5 py-1 rounded-full`}>
+                  {job.active ? "Active" : "Off"}
                 </span>
               </button>
             </td>

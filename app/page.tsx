@@ -1,9 +1,6 @@
-import Image from 'next/image'
-import Table from '../app/components/Table'
-import Form from '../app/components/Form'
-import Create from "./job/create";
+import Table from '@/app/views/job/Table'
+import Create from "@/app/views/job/create";
 import Head from "next/head";
-import { BiUserPlus } from "react-icons/bi";
 
 export default function Home() {
   return (

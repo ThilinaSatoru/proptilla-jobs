@@ -1,5 +1,6 @@
-import { BiCheck } from 'react-icons/bi'
+import {BiCheck} from 'react-icons/bi'
 
+// @ts-ignore
 export default function Success({ message }){
     return (
         <div className="success container mx-auto">
