@@ -1,53 +1,145 @@
 "use client";
 import Select from "react-select";
-import {useState} from "react";
+import useSWR from 'swr';
+import {ChangeEvent, SyntheticEvent, useCallback, useEffect, useRef, useState} from "react";
 import {MdCancelScheduleSend} from "react-icons/md";
 import {City} from "@/app/core/dto/City";
+import {Option} from "@/app/core/dto/Option";
+import {Website} from "@/app/core/dto/Website";
 
-const optiones = [
-  { value: 'chocolate', label: 'Chocolate' },
-  { value: 'strawberry', label: 'Strawberry' },
-  { value: 'vanilla', label: 'Vanilla' },
-];
-
+const connectorOptions: Option[] = [];
+const cityOptions: Option[] = [];
 
 export default function Create() {
-  const [modal, setModal] = useState(false);
-  const [warna, setWarna] = useState<{ value: string, label: string }[]>();
-  const [cities, setCities] = useState<City[]>([])
-  const options: { value: string, label: string }[] = []
-
-  const handleWarnaChange = async (selected: any, selectaction: any) => {
-    const { action } = selectaction;
-    // console.log(`action ${action}`);
-    if (action === "clear") {
-    } else if (action === "select-option") {
-    } else if (action === "remove-value") {
-      console.log("remove");
+  const [ modal, setModal] = useState(false);
+  async function handleChange() {
+    setModal(!modal)
+    if(!modal) {
+      clearJobState();
     }
-    setWarna(selected);
+  }
+  const fetcher = (url: string) => fetch(url).then((res) => res.json());
+  const { data: cityData } = useSWR('http://localhost:8081/api/v1/cities', fetcher);
+  const { data: conData } = useSWR('http://localhost:8081/api/v1/connectors', fetcher);
+
+  const [ cities, setCities] = useState<City[]>([]);
+  const [ selectedCities, setSelectedCities] = useState<City[]>([]);
+  const [ websites, setWebsites] = useState<Website[]>([]);
+  const [ selectedWebsite, setSelectedWebsite] = useState<Website>();
+
+  const [finalValue, setFinalValue] = useState<string | boolean>("");
+  const [jobState, setJobState] = useState({
+    id: "",
+    name: "",
+    jobClass: "",
+    cron: "",
+    active: false,
+    createdOn: "",
+    lastExecutedOn: "",
+    website: new Website(null, "", "", "", "", ""),
+    cities: [] as typeof City[],
+  });
+  const clearJobState = () => {
+    setSelectedCities([]);
+    setJobState({
+      id: "",
+      name: "",
+      jobClass: "",
+      cron: "",
+      active: false,
+      createdOn: "",
+      lastExecutedOn: "",
+      website: new Website(null, "", "", "", "", ""),
+      cities: [] as typeof City[],
+    });
+  };
+  const inputJobClassRef = useRef(null);
+
+  const handleCitiesSelect = (selectedOption:any) => {
+    // @ts-ignore
+    selectedOption.forEach(selected=>{
+      selectedCities.push(new City(null, selected.label, selected.value))
+    })
+    console.log(selectedCities)
   };
 
-  async function loadOptions() {
-    fetch("http://localhost:8081/api/v1/cities")
-        .then((res) => res.json())
-        .then((data) => {
+  const handleWebsiteSelect = (selectedOption:any) => {
+    setSelectedWebsite(new Website(null, "", "", selectedOption.label, "", ""))
+    console.log(selectedOption)
+  };
 
-          setCities(data as City[])
-          cities.forEach(city=>{
-            options.push({ value: city.name, label: city.code })
-          })
-
+  const fetchCityOptions = useCallback(async () => {
+    setCities([])
+    setWebsites([])
+    setCities(cityData as City[])
+    setWebsites(conData as Website[])
+  }, [cityData, conData]);
+  
+  useEffect(()=>{
+    fetchCityOptions().then(v=>{
+      if(cities){
+        cities.forEach(city=>{
+          const newData: Option = { value: city.code, label: city.name };
+          cityOptions.push(newData)
         })
+      }
+      
+      if(websites){
+        websites.forEach(con=>{
+          const newData: Option = { value: con.refNo, label: con.refNo };
+          connectorOptions.push(newData)
+        })
+      }
+    });
+  },[cities, cityData, websites, fetchCityOptions])
+
+
+
+
+  function handleSubmit(e: SyntheticEvent) {
+    e.preventDefault();
+    console.log(jobState)
+    // clearJobState();
+    // await fetch("http://localhost:8081/api/v1/jobs", {
+    //   method : "POST",
+    //   headers : {
+    //     'Content-Type' : 'application/json'
+    //   },
+    //   body: JSON.stringify({
+    //     job
+    //   })
+    // }
   }
 
-  function handleChange() {
-    setModal(!modal);
-
-    loadOptions().then(r => {
-      console.log(options)
-    })
-  }
+  const handleFormChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    let finValue;
+    if(type === "checkbox") {
+      finValue = type === "checkbox" ? e.target.checked : e.target.value;
+    }
+    else if(name == "jobClass" && inputJobClassRef.current) {
+      finValue = inputJobClassRef.current["value"];
+    }
+    else {
+      finValue = value;
+    }
+    setFinalValue(finValue)
+    setJobState({
+      ...jobState,
+      [name]: finalValue,
+    });
+  };
+  
+  useEffect(() => {
+    console.info(finalValue)
+    setJobState({
+      ...jobState,
+      ["createdOn"]: new Date().toLocaleString(),
+      ["lastExecutedOn"]: new Date().toLocaleString(),
+      ["website"]: new Website(null, "w", "w", selectedWebsite?.refNo as string, "w", "w"),
+      ["cities"]: selectedCities as [],
+    });
+  },[])
 
   return (
     <div>
@@ -69,9 +161,9 @@ export default function Create() {
 
       <div className="modal">
         <div className="modal-box">
-          <h3 className="font-bold text-lg">Heloo</h3>
+          <h3 className="font-bold text-lg">Job</h3>
 
-          <form action="">
+          <form onSubmit={handleSubmit}>
             <div className="form-control">
               <label htmlFor="name" className="label font-bold">
                 Name
@@ -80,17 +172,37 @@ export default function Create() {
                 type="text"
                 name="name"
                 id="name"
+                value={jobState.name}
+                onChange={handleFormChange}
                 className="input w-full input-bordered"
               />
             </div>
             <div className="form-control">
-              <label htmlFor="JobClass" className="label font-bold">
+              <label htmlFor="selectWarna" className="label font-bold">
+                Cities
+              </label>
+              <Select
+                  id="selectWarna"
+                  instanceId="selectWarna"
+                  isMulti
+                  name="colors"
+                  className="basic-multi-select"
+                  classNamePrefix="select"
+                  options={cityOptions}
+                  onChange={handleCitiesSelect}
+                  placeholder="Pilih Warna"
+              />
+            </div>
+            <div className="form-control">
+              <label htmlFor="jobClass" className="label font-bold">
                 JobClass
               </label>
               <input
                 type="text"
-                name="JobClass"
-                id="JobClass"
+                name="jobClass"
+                id="jobClass"
+                ref={inputJobClassRef}
+                onChange={handleFormChange}
                 className="border w-full px-5 py-3 focus:outline-none rounded-md"
                 placeholder="JobClass"
               />
@@ -103,6 +215,8 @@ export default function Create() {
                 type="text"
                 name="cron"
                 id="cron"
+                value={jobState.cron}
+                onChange={handleFormChange}
                 className="border w-full px-5 py-3 focus:outline-none rounded-md"
                 placeholder="schedule"
               />
@@ -111,28 +225,18 @@ export default function Create() {
               <label htmlFor="website" className="label font-bold">
                 Website
               </label>
-              <input
-                type="text"
-                name="website"
-                id="website"
-                className="border w-full px-5 py-3 focus:outline-none rounded-md"
-                placeholder="website"
-              />
-            </div>
-            <div className="form-control">
-              <label htmlFor="" className="label font-bold">
-                Cities
-              </label>
               <Select
-                id="selectWarna"
-                instanceId="selectWarna"
-                isMulti
-                name="colors"
-                className="basic-multi-select"
-                classNamePrefix="select"
-                options={options}
-                onChange={handleWarnaChange}
-                placeholder="Pilih Warna"
+                  id="selectWebsites"
+                  instanceId="selectWebsites"
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isDisabled={false}
+                  isClearable={true}
+                  isRtl={false}
+                  isSearchable={true}
+                  name="color"
+                  options={connectorOptions}
+                  onChange={handleWebsiteSelect}
               />
             </div>
 
@@ -140,9 +244,10 @@ export default function Create() {
               <div className="form-check">
                 <input
                   type="radio"
-                  value="Active"
+                  value={jobState.active ? 'true' : undefined}
+                  onChange={handleFormChange}
                   id="radioDefault1"
-                  name="status"
+                  name="active"
                   className="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300  bg-white checked:bg-green-500 checked:border-green-500 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
                 />
                 <label
@@ -155,9 +260,10 @@ export default function Create() {
               <div className="form-check">
                 <input
                   type="radio"
-                  value="Inactive"
+                  value={!jobState.active ? 'false' : undefined}
+                  onChange={handleFormChange}
                   id="radioDefault2"
-                  name="status"
+                  name="active"
                   className="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300  bg-white checked:bg-green-500 checked:border-green-500 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
                 />
                 <label

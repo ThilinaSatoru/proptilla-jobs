@@ -1,4 +1,5 @@
 import {BiEdit, BiTrashAlt} from "react-icons/bi";
+import "@/app/core/dto/Job";
 import {Job} from "@/app/core/dto/Job";
 
 export default async function Table() {

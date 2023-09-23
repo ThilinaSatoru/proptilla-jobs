@@ -1,5 +1,7 @@
-export interface City {
-    id: number;
-    name: string;
-    code: string;
+export class City {
+    constructor(
+        public id: number | null,
+        public name: string,
+        public code: string
+    ) {}
 }
