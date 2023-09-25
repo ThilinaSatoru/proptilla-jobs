@@ -56,15 +56,25 @@ export default function Create() {
   const inputJobClassRef = useRef(null);
 
   const handleCitiesSelect = (selectedOption:any) => {
-    // @ts-ignore
-    selectedOption.forEach(selected=>{
-      selectedCities.push(new City(null, selected.label, selected.value))
+    let selected_cities: City[] = []
+    selectedOption.forEach((selected: any) => {
+      selected_cities.push(new City(null, selected.label, selected.value))
     })
-    console.log(selectedCities)
+    setJobState({
+      ...jobState,
+      cities: selected_cities as [],
+    });
+    console.log(selected_cities)
   };
 
   const handleWebsiteSelect = (selectedOption:any) => {
-    setSelectedWebsite(new Website(null, "", "", selectedOption.label, "", ""))
+    let label = selectedOption ? selectedOption.label : "";
+
+    setJobState({
+      ...jobState,
+      website: new Website(null, "", "", label, "", ""),
+    });
+
     console.log(selectedOption)
   };
 
@@ -98,6 +108,11 @@ export default function Create() {
 
   function handleSubmit(e: SyntheticEvent) {
     e.preventDefault();
+    setJobState({
+      ...jobState,
+      createdOn: new Date().toLocaleString(),
+      lastExecutedOn: new Date().toLocaleString(),
+    });
     console.log(jobState)
     // clearJobState();
     // await fetch("http://localhost:8081/api/v1/jobs", {
@@ -116,30 +131,16 @@ export default function Create() {
     let finValue;
     if(type === "checkbox") {
       finValue = type === "checkbox" ? e.target.checked : e.target.value;
-    }
-    else if(name == "jobClass" && inputJobClassRef.current) {
+    } else if (name == "jobClass" && inputJobClassRef.current) {
       finValue = inputJobClassRef.current["value"];
-    }
-    else {
+    } else {
       finValue = value;
     }
-    setFinalValue(finValue)
     setJobState({
       ...jobState,
-      [name]: finalValue,
+      [name]: finValue,
     });
   };
-  
-  useEffect(() => {
-    console.info(finalValue)
-    setJobState({
-      ...jobState,
-      ["createdOn"]: new Date().toLocaleString(),
-      ["lastExecutedOn"]: new Date().toLocaleString(),
-      ["website"]: new Website(null, "w", "w", selectedWebsite?.refNo as string, "w", "w"),
-      ["cities"]: selectedCities as [],
-    });
-  },[])
 
   return (
     <div>
