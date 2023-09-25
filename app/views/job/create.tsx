@@ -11,23 +11,23 @@ const connectorOptions: Option[] = [];
 const cityOptions: Option[] = [];
 
 export default function Create() {
-  const [ modal, setModal] = useState(false);
+  const [modal, setModal] = useState(false);
+
   async function handleChange() {
     setModal(!modal)
-    if(!modal) {
+    if (!modal) {
       clearJobState();
+      console.warn(process.env.API_URL)
     }
   }
+
+  const [isSubmit, setSubmit] = useState(false);
   const fetcher = (url: string) => fetch(url).then((res) => res.json());
-  const { data: cityData } = useSWR('http://localhost:8081/api/v1/cities', fetcher);
-  const { data: conData } = useSWR('http://localhost:8081/api/v1/connectors', fetcher);
+  const {data: cityData} = useSWR(process.env.REACT_APP_API_URL + '/api/v1/cities', fetcher);
+  const {data: conData} = useSWR(process.env.REACT_APP_API_URL + '/api/v1/connectors', fetcher);
 
-  const [ cities, setCities] = useState<City[]>([]);
-  const [ selectedCities, setSelectedCities] = useState<City[]>([]);
-  const [ websites, setWebsites] = useState<Website[]>([]);
-  const [ selectedWebsite, setSelectedWebsite] = useState<Website>();
-
-  const [finalValue, setFinalValue] = useState<string | boolean>("");
+  const [cities, setCities] = useState<City[]>([]);
+  const [websites, setWebsites] = useState<Website[]>([]);
   const [jobState, setJobState] = useState({
     id: "",
     name: "",
@@ -40,7 +40,6 @@ export default function Create() {
     cities: [] as typeof City[],
   });
   const clearJobState = () => {
-    setSelectedCities([]);
     setJobState({
       id: "",
       name: "",
@@ -49,10 +48,11 @@ export default function Create() {
       active: false,
       createdOn: "",
       lastExecutedOn: "",
-      website: new Website(null, "", "", "", "", ""),
+      website: new Website(null, "", "", "", "READY", ""),
       cities: [] as typeof City[],
     });
   };
+
   const inputJobClassRef = useRef(null);
 
   const handleCitiesSelect = (selectedOption:any) => {
@@ -72,62 +72,56 @@ export default function Create() {
 
     setJobState({
       ...jobState,
-      website: new Website(null, "", "", label, "", ""),
+      website: new Website(null, "", "", label, "READY", ""),
     });
 
     console.log(selectedOption)
   };
 
   const fetchCityOptions = useCallback(async () => {
-    setCities([])
-    setWebsites([])
-    setCities(cityData as City[])
-    setWebsites(conData as Website[])
+    setCities([]);
+    setWebsites([]);
+    setCities(cityData as City[]);
+    setWebsites(conData as Website[]);
   }, [cityData, conData]);
-  
-  useEffect(()=>{
-    fetchCityOptions().then(v=>{
-      if(cities){
-        cities.forEach(city=>{
-          const newData: Option = { value: city.code, label: city.name };
+
+  useEffect(() => {
+    fetchCityOptions().then(v => {
+      if (cities) {
+        cities.forEach(city => {
+          const newData: Option = {value: city.code, label: city.name};
           cityOptions.push(newData)
         })
       }
-      
-      if(websites){
-        websites.forEach(con=>{
-          const newData: Option = { value: con.refNo, label: con.refNo };
+
+      if (websites) {
+        websites.forEach(con => {
+          const newData: Option = {value: con.refNo, label: con.refNo};
           connectorOptions.push(newData)
         })
       }
     });
-  },[cities, cityData, websites, fetchCityOptions])
+  }, [cities, fetchCityOptions, websites])
 
-
-
+  async function save() {
+    await fetch("http://localhost:8081/api/v1/jobs", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(jobState),
+    });
+    console.log(JSON.stringify(jobState))
+  }
 
   function handleSubmit(e: SyntheticEvent) {
     e.preventDefault();
-    setJobState({
-      ...jobState,
-      createdOn: new Date().toLocaleString(),
-      lastExecutedOn: new Date().toLocaleString(),
-    });
-    console.log(jobState)
-    // clearJobState();
-    // await fetch("http://localhost:8081/api/v1/jobs", {
-    //   method : "POST",
-    //   headers : {
-    //     'Content-Type' : 'application/json'
-    //   },
-    //   body: JSON.stringify({
-    //     job
-    //   })
-    // }
+    setSubmit(!isSubmit);
+    console.log(save());
   }
 
   const handleFormChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+    const {name, value, type, checked} = e.target;
     let finValue;
     if(type === "checkbox") {
       finValue = type === "checkbox" ? e.target.checked : e.target.value;
@@ -140,6 +134,7 @@ export default function Create() {
       ...jobState,
       [name]: finValue,
     });
+    setSubmit(!isSubmit);
   };
 
   return (

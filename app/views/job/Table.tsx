@@ -4,7 +4,7 @@ import {Job} from "@/app/core/dto/Job";
 
 export default async function Table() {
   
-  const response = await fetch(process.env.API_URL + "/api/v1/jobs");
+  const response = await fetch(process.env.REACT_APP_API_URL + "/api/v1/jobs");
   const jobs: Job[] = await response.json();
   // console.log(JSON.stringify(jobs));
 
@@ -61,10 +61,10 @@ export default async function Table() {
               </button>
             </td>
             <td className="px-16 py-2">
-              <span>{job.createdOn?.getTime()}</span>
+              <span>{job.createdOn?.toString()}</span>
             </td>
             <td className="px-16 py-2">
-              <span>{job.lastExecutedOn?.getTime()}</span>
+              <span>{job.lastExecutedOn?.toString()}</span>
             </td>
             <td className="px-16 py-2 flex justify-around gap-5">
               <button className="cursor">
