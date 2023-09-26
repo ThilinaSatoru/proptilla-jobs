@@ -72,8 +72,6 @@ export default function Toggle(job: Job) {
                             </button>
                         }
                     </div>
-
-
                 </div>
             </div>
         </div>

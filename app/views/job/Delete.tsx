@@ -57,7 +57,7 @@ export default function Delete(job: Job) {
                             Close
                         </button>
                         {!isMutating ? (
-                                <button type="button" className="btn btn-primary" onClick={() => handleDelete(job.id)}>
+                                <button type="button" className="btn btn-error" onClick={() => handleDelete(job.id)}>
                                     Delete
                                 </button>
                             ) :

@@ -161,17 +161,17 @@ export default function Create() {
             onClick={handleChange}
             className="flex bg-indigo-500 text-white px-4 py-2 border rounded-md hover:bg-grary-50 hover:border-indigo-500 hover:text-gray-800"
         >
-          Add Job{" "}
+          Add Job
           <span className="px-1">
           <MdCancelScheduleSend size={23}></MdCancelScheduleSend>
         </span>
-      </button>
-      <input
-        type="checkbox"
-        checked={modal}
-        onChange={handleChange}
-        className="modal-toggle"
-      />
+        </button>
+        <input
+            type="checkbox"
+            checked={modal}
+            onChange={handleChange}
+            className="modal-toggle"
+        />
 
       <div className="modal">
         <div className="modal-box">
@@ -299,7 +299,7 @@ export default function Create() {
               <button type="button" className="btn" onClick={handleChange}>
                 Close
               </button>
-              <button type="submit" className="btn">
+              <button type="submit" className="btn btn-primary">
                 Save
               </button>
             </div>

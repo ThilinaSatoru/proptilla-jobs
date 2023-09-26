@@ -3,6 +3,8 @@ import {Job} from "@/app/core/dto/Job";
 import Delete from "@/app/views/job/Delete";
 import Update from "@/app/views/job/Update";
 import Toggle from "@/app/views/job/Toggle";
+import ConnectorDropDownView from "@/app/components/ConnectorDropDownView";
+import CitiesDropDownView from "@/app/components/CitiesDropDownView";
 
 
 export default async function Table() {
@@ -26,6 +28,12 @@ export default async function Table() {
           </th>
           <th className="px-16 py-2">
             <span className="text-gray-200">CRON_TIME</span>
+          </th>
+          <th className="px-16 py-2">
+            <span className="text-gray-200">CITIES</span>
+          </th>
+          <th className="px-16 py-2">
+            <span className="text-gray-200">CONNECTOR</span>
           </th>
           <th className="px-16 py-2">
             <span className="text-gray-200">On/Off</span>
@@ -56,6 +64,12 @@ export default async function Table() {
               </td>
               <td className="px-16 py-2">
                 <span>{job.cron}</span>
+              </td>
+              <td className="px-16 py-2">
+                <CitiesDropDownView {...job}/>
+              </td>
+              <td className="px-16 py-2">
+                <ConnectorDropDownView {...job}/>
               </td>
               <td className="px-16 py-2">
                 <Toggle {...job}/>
