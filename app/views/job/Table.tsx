@@ -4,8 +4,8 @@ import {Job} from "@/app/core/dto/Job";
 
 export default async function Table() {
   
-  const response = await fetch(process.env.REACT_APP_API_URL + "/api/v1/jobs");
-  const jobs: Job[] = await response.json();
+  const response = await fetch(process.env.REACT_APP_API_URL + "/api/v1/jobs", {cache: 'no-store'});
+    const jobs: Job[] = await response.json();
   // console.log(JSON.stringify(jobs));
 
   return (

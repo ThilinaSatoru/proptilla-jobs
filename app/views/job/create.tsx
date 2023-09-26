@@ -1,7 +1,8 @@
 "use client";
 import Select from "react-select";
+import {useRouter} from 'next/navigation';
 import useSWR from 'swr';
-import {ChangeEvent, SyntheticEvent, useCallback, useEffect, useRef, useState} from "react";
+import {ChangeEvent, SyntheticEvent, useCallback, useEffect, useState, useTransition} from "react";
 import {MdCancelScheduleSend} from "react-icons/md";
 import {City} from "@/app/core/dto/City";
 import {Option} from "@/app/core/dto/Option";
@@ -9,23 +10,31 @@ import {Website} from "@/app/core/dto/Website";
 
 const connectorOptions: Option[] = [];
 const cityOptions: Option[] = [];
+const REACT_APP_API_URL: string = "http://localhost:8081";
+const job_classes: Option[] = [
+  {value: "AGENT", label: "AGENT"},
+  {value: "PROPERTY", label: "PROPERTY"}
+];
 
 export default function Create() {
+
   const [modal, setModal] = useState(false);
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   async function handleChange() {
     setModal(!modal)
     if (!modal) {
       clearJobState();
-      console.warn(process.env.API_URL)
     }
   }
 
   const [isSubmit, setSubmit] = useState(false);
   const fetcher = (url: string) => fetch(url).then((res) => res.json());
-  const {data: cityData} = useSWR(process.env.REACT_APP_API_URL + '/api/v1/cities', fetcher);
-  const {data: conData} = useSWR(process.env.REACT_APP_API_URL + '/api/v1/connectors', fetcher);
+  const {data: cityData} = useSWR(REACT_APP_API_URL + '/api/v1/cities', fetcher);
+  const {data: conData} = useSWR(REACT_APP_API_URL + '/api/v1/connectors', fetcher);
 
+  const [isTrue, setIsTrue] = useState(true);
   const [cities, setCities] = useState<City[]>([]);
   const [websites, setWebsites] = useState<Website[]>([]);
   const [jobState, setJobState] = useState({
@@ -53,38 +62,12 @@ export default function Create() {
     });
   };
 
-  const inputJobClassRef = useRef(null);
-
-  const handleCitiesSelect = (selectedOption:any) => {
-    let selected_cities: City[] = []
-    selectedOption.forEach((selected: any) => {
-      selected_cities.push(new City(null, selected.label, selected.value))
-    })
-    setJobState({
-      ...jobState,
-      cities: selected_cities as [],
-    });
-    console.log(selected_cities)
-  };
-
-  const handleWebsiteSelect = (selectedOption:any) => {
-    let label = selectedOption ? selectedOption.label : "";
-
-    setJobState({
-      ...jobState,
-      website: new Website(null, "", "", label, "READY", ""),
-    });
-
-    console.log(selectedOption)
-  };
-
   const fetchCityOptions = useCallback(async () => {
     setCities([]);
     setWebsites([]);
     setCities(cityData as City[]);
     setWebsites(conData as Website[]);
   }, [cityData, conData]);
-
   useEffect(() => {
     fetchCityOptions().then(v => {
       if (cities) {
@@ -103,6 +86,53 @@ export default function Create() {
     });
   }, [cities, fetchCityOptions, websites])
 
+  const handleCitiesSelect = (selectedOption: any) => {
+    let selected_cities: City[] = []
+    selectedOption.forEach((selected: any) => {
+      selected_cities.push(new City(null, selected.label, selected.value))
+    })
+    setJobState({
+      ...jobState,
+      cities: selected_cities as [],
+    });
+    console.log(selected_cities)
+  };
+  const handleJobClassSelect = (selectedOption: any) => {
+    let label = selectedOption ? selectedOption.label : "";
+
+    setJobState({
+      ...jobState,
+      jobClass: label,
+    });
+
+    console.log(selectedOption)
+  };
+  const handleWebsiteSelect = (selectedOption: any) => {
+    let label = selectedOption ? selectedOption.label : "";
+
+    setJobState({
+      ...jobState,
+      website: new Website(null, "", "", label, "READY", ""),
+    });
+
+    console.log(selectedOption)
+  };
+  const handleRadioChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setIsTrue(e.target.value === 'true');
+    setJobState({
+      ...jobState,
+      active: isTrue,
+    });
+  };
+  const handleFormChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const {name, value} = e.target;
+    setJobState({
+      ...jobState,
+      [name]: value,
+    });
+    setSubmit(!isSubmit);
+  };
+
   async function save() {
     await fetch("http://localhost:8081/api/v1/jobs", {
       method: "POST",
@@ -118,33 +148,21 @@ export default function Create() {
     e.preventDefault();
     setSubmit(!isSubmit);
     console.log(save());
+    startTransition(() => {
+      // Refresh the current route and fetch new data from the server without
+      // losing client-side browser or React state.
+      router.refresh();
+    });
   }
 
-  const handleFormChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const {name, value, type, checked} = e.target;
-    let finValue;
-    if(type === "checkbox") {
-      finValue = type === "checkbox" ? e.target.checked : e.target.value;
-    } else if (name == "jobClass" && inputJobClassRef.current) {
-      finValue = inputJobClassRef.current["value"];
-    } else {
-      finValue = value;
-    }
-    setJobState({
-      ...jobState,
-      [name]: finValue,
-    });
-    setSubmit(!isSubmit);
-  };
-
   return (
-    <div>
-      <button
-        onClick={handleChange}
-        className="flex bg-indigo-500 text-white px-4 py-2 border rounded-md hover:bg-grary-50 hover:border-indigo-500 hover:text-gray-800"
-      >
-        Add Job{" "}
-        <span className="px-1">
+      <div>
+        <button
+            onClick={handleChange}
+            className="flex bg-indigo-500 text-white px-4 py-2 border rounded-md hover:bg-grary-50 hover:border-indigo-500 hover:text-gray-800"
+        >
+          Add Job{" "}
+          <span className="px-1">
           <MdCancelScheduleSend size={23}></MdCancelScheduleSend>
         </span>
       </button>
@@ -193,14 +211,19 @@ export default function Create() {
               <label htmlFor="jobClass" className="label font-bold">
                 JobClass
               </label>
-              <input
-                type="text"
-                name="jobClass"
-                id="jobClass"
-                ref={inputJobClassRef}
-                onChange={handleFormChange}
-                className="border w-full px-5 py-3 focus:outline-none rounded-md"
-                placeholder="JobClass"
+              <Select
+                  name="jobClass"
+                  id="jobClass"
+                  instanceId="jobClass"
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isDisabled={false}
+                  isClearable={false}
+                  isRtl={false}
+                  isSearchable={false}
+                  options={job_classes}
+                  onChange={handleJobClassSelect}
+                  required={true}
               />
             </div>
             <div className="form-control">
@@ -208,9 +231,9 @@ export default function Create() {
                 CRON
               </label>
               <input
-                type="text"
-                name="cron"
-                id="cron"
+                  type="text"
+                  name="cron"
+                  id="cron"
                 value={jobState.cron}
                 onChange={handleFormChange}
                 className="border w-full px-5 py-3 focus:outline-none rounded-md"
@@ -230,7 +253,7 @@ export default function Create() {
                   isClearable={true}
                   isRtl={false}
                   isSearchable={true}
-                  name="color"
+                  name="selectWebsites"
                   options={connectorOptions}
                   onChange={handleWebsiteSelect}
               />
@@ -239,32 +262,34 @@ export default function Create() {
             <div className="flex gap-10 items-center">
               <div className="form-check">
                 <input
-                  type="radio"
-                  value={jobState.active ? 'true' : undefined}
-                  onChange={handleFormChange}
-                  id="radioDefault1"
-                  name="active"
-                  className="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300  bg-white checked:bg-green-500 checked:border-green-500 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
+                    type="radio"
+                    value="true"
+                    checked={isTrue}
+                    onChange={handleRadioChange}
+                    id="radioDefault1"
+                    name="active"
+                    className="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300  bg-white checked:bg-green-500 checked:border-green-500 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
                 />
                 <label
-                  htmlFor="radioDefault1"
-                  className="inline-block tet-gray-800"
+                    htmlFor="radioDefault1"
+                    className="inline-block tet-gray-800"
                 >
                   Active
                 </label>
               </div>
               <div className="form-check">
                 <input
-                  type="radio"
-                  value={!jobState.active ? 'false' : undefined}
-                  onChange={handleFormChange}
-                  id="radioDefault2"
-                  name="active"
-                  className="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300  bg-white checked:bg-green-500 checked:border-green-500 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
+                    type="radio"
+                    value="false"
+                    checked={!isTrue}
+                    onChange={handleRadioChange}
+                    id="radioDefault2"
+                    name="active"
+                    className="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300  bg-white checked:bg-green-500 checked:border-green-500 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
                 />
                 <label
-                  htmlFor="radioDefault2"
-                  className="inline-block tet-gray-800"
+                    htmlFor="radioDefault2"
+                    className="inline-block tet-gray-800"
                 >
                   Inactive
                 </label>
