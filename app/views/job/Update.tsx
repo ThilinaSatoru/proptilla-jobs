@@ -9,8 +9,8 @@ import {Website} from "@/app/core/dto/Website";
 import {BiEdit} from "react-icons/bi";
 import {Job} from "@/app/core/dto/Job";
 
-const connectorOptions: Option[] = [];
-const cityOptions: Option[] = [];
+let connectorOptions: Option[] = [];
+let cityOptions: Option[] = [];
 
 const job_classes: Option[] = [
     {value: "AGENT", label: "AGENT"},
@@ -26,7 +26,8 @@ export default function Update(job: Job) {
     async function handleChange() {
         setModal(!modal)
         if (!modal) {
-            clearJobState();
+            console.log(jobState);
+            // clearJobState();
         }
     }
 
@@ -35,31 +36,73 @@ export default function Update(job: Job) {
     const {data: cityData} = useSWR(process.env.NEXT_PUBLIC_API_URL + '/api/v1/cities', fetcher);
     const {data: conData} = useSWR(process.env.NEXT_PUBLIC_API_URL + '/api/v1/connectors', fetcher);
 
-    const [isTrue, setIsTrue] = useState(true);
+    const [isTrue, setIsTrue] = useState(job.active);
+    const [defaultConnector, setDefaultConnector] = useState<Option>({
+        value: job.website?.refNo,
+        label: job.website?.refNo
+    });
+    const [defaultCities, setDefaultCities] = useState<Option[]>();
+    const [defaultJobClass, setDefaultJobClass] = useState<Option>({value: job.jobClass, label: job.jobClass});
+
     const [cities, setCities] = useState<City[]>([]);
     const [websites, setWebsites] = useState<Website[]>([]);
+    let cityList: City[] = [];
     const [jobState, setJobState] = useState({
-        id: "",
-        name: "",
-        jobClass: "",
-        cron: "",
-        active: false,
-        createdOn: "",
-        lastExecutedOn: "",
-        website: new Website(null, "", "", "", "", ""),
-        cities: [] as typeof City[],
+        id: job.id,
+        name: job.name,
+        jobClass: job.jobClass,
+        cron: job.cron,
+        active: job.active,
+        createdOn: job.createdOn,
+        lastExecutedOn: job.lastExecutedOn,
+        website: job.website,
+        cities: cityList as City[],
     });
-    const clearJobState = () => {
+
+    useEffect(() => {
+        let citySelectedOptions: Option[] = [];
+
         setJobState({
-            id: "",
+            ...jobState,
+            id: job.id,
+            name: job.name,
+            jobClass: job.jobClass,
+            cron: job.cron,
+            active: job.active,
+        });
+
+        if (job.cities !== undefined) {
+            cityList = job.cities;
+            cityList.forEach(city => {
+                const newData: Option = {value: city.code, label: city.name};
+                citySelectedOptions.push(newData);
+            })
+            setDefaultCities(citySelectedOptions);
+            setJobState({
+                ...jobState,
+                cities: citySelectedOptions as [],
+            });
+            // console.log(defaultCities);
+        }
+
+    }, [job, modal]);
+
+    const clearJobState = () => {
+        // cityOptions = [];
+        // connectorOptions = [];
+        setDefaultCities([]);
+        setDefaultConnector({value: "", label: ""});
+        setDefaultJobClass({value: "", label: ""});
+        setJobState({
+            id: 0,
             name: "",
             jobClass: "",
             cron: "",
             active: false,
-            createdOn: "",
-            lastExecutedOn: "",
+            createdOn: new Date,
+            lastExecutedOn: new Date,
             website: new Website(null, "", "", "", "READY", ""),
-            cities: [] as typeof City[],
+            cities: [] as City[],
         });
     };
 
@@ -69,9 +112,11 @@ export default function Update(job: Job) {
         setCities(cityData as City[]);
         setWebsites(conData as Website[]);
     }, [cityData, conData]);
+
     useEffect(() => {
         fetchCityOptions().then(v => {
             if (cities) {
+                cityOptions = [];
                 cities.forEach(city => {
                     const newData: Option = {value: city.code, label: city.name};
                     cityOptions.push(newData)
@@ -79,6 +124,7 @@ export default function Update(job: Job) {
             }
 
             if (websites) {
+                connectorOptions = [];
                 websites.forEach(con => {
                     const newData: Option = {value: con.refNo, label: con.refNo};
                     connectorOptions.push(newData)
@@ -134,23 +180,35 @@ export default function Update(job: Job) {
         setSubmit(!isSubmit);
     };
 
-    async function save() {
-        await fetch("http://localhost:8081/api/v1/jobs", {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(jobState),
-        });
-        console.log(JSON.stringify(jobState))
+    async function do_update(id: number | null) {
+        // await fetch(process.env.NEXT_PUBLIC_API_URL + `/api/v1/jobs/${id}`, {
+        //     method: "PUT",
+        //     headers: {
+        //         'Content-Type': 'application/json'
+        //     },
+        //     body: JSON.stringify(jobState),
+        // });
+        // console.log(JSON.stringify(jobState));
+        console.log(jobState);
     }
 
     function handleSubmit(e: SyntheticEvent) {
         e.preventDefault();
-        save().then(r => {
+        setJobState({
+            ...jobState,
+            id: 0,
+            name: "",
+            jobClass: "",
+            cron: "",
+            active: false,
+            createdOn: new Date,
+            lastExecutedOn: new Date,
+            website: new Website(null, "", "", "", "READY", ""),
+            cities: [] as City[],
+        });
+        do_update(job.id).then(r => {
+            clearJobState();
             startTransition(() => {
-                // Refresh the current route and fetch new data from the server without
-                // losing client-side browser or React state.
                 router.refresh();
                 setModal(false);
             });
@@ -168,7 +226,6 @@ export default function Update(job: Job) {
                 onChange={handleChange}
                 className="modal-toggle"
             />
-
             <div className="modal">
                 <div className="modal-box">
                     <h3 className="font-bold text-lg">Job</h3>
@@ -188,22 +245,6 @@ export default function Update(job: Job) {
                             />
                         </div>
                         <div className="form-control">
-                            <label htmlFor="selectWarna" className="label font-bold">
-                                Cities
-                            </label>
-                            <Select
-                                id="selectWarna"
-                                instanceId="selectWarna"
-                                isMulti
-                                name="colors"
-                                className="basic-multi-select"
-                                classNamePrefix="select"
-                                options={cityOptions}
-                                onChange={handleCitiesSelect}
-                                placeholder="Pilih Warna"
-                            />
-                        </div>
-                        <div className="form-control">
                             <label htmlFor="jobClass" className="label font-bold">
                                 JobClass
                             </label>
@@ -220,6 +261,7 @@ export default function Update(job: Job) {
                                 options={job_classes}
                                 onChange={handleJobClassSelect}
                                 required={true}
+                                defaultValue={defaultJobClass}
                             />
                         </div>
                         <div className="form-control">
@@ -237,19 +279,37 @@ export default function Update(job: Job) {
                             />
                         </div>
                         <div className="form-control">
+                            <label htmlFor="Cities" className="label font-bold">
+                                Cities
+                            </label>
+                            <Select
+                                defaultValue={defaultCities}
+                                id="Cities"
+                                instanceId="Cities"
+                                isMulti
+                                name="Cities"
+                                isSearchable={true}
+                                className="basic-multi-select"
+                                options={cityOptions}
+                                onChange={handleCitiesSelect}
+                                placeholder="Cities"
+                            />
+                        </div>
+                        <div className="form-control">
                             <label htmlFor="website" className="label font-bold">
                                 Website
                             </label>
                             <Select
-                                id="selectWebsites"
-                                instanceId="selectWebsites"
+                                defaultValue={defaultConnector}
+                                id="website"
+                                instanceId="website"
                                 className="basic-single"
                                 classNamePrefix="select"
                                 isDisabled={false}
                                 isClearable={true}
                                 isRtl={false}
                                 isSearchable={true}
-                                name="selectWebsites"
+                                name="website"
                                 options={connectorOptions}
                                 onChange={handleWebsiteSelect}
                             />
@@ -295,7 +355,7 @@ export default function Update(job: Job) {
                             <button type="button" className="btn" onClick={handleChange}>
                                 Close
                             </button>
-                            <button type="submit" className="btn">
+                            <button type="submit" className="btn btn-primary">
                                 Save
                             </button>
                         </div>

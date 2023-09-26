@@ -39,16 +39,16 @@ export default function CitiesDropDownView(job: Job) {
                     </div>
 
                     <div className="p-6 ">
-                        <ul className="max-w-md divide-y divide-gray-200 dark:divide-gray-700">
+                        <ul className="max-w-md">
 
                             {cityList.map((city, index) => (
                                 <li key={index} className="pb-3 sm:pb-4">
                                     <div className="flex items-center space-x-4">
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
+                                            <p className="font-medium text-gray-900 font-semibold truncate dark:text-white">
                                                 {city.name}
                                             </p>
-                                            <p className="text-sm text-gray-500 truncate dark:text-gray-400">
+                                            <p className="text-gray-500 truncate dark:text-gray-400">
                                                 {city.code}
                                             </p>
                                         </div>

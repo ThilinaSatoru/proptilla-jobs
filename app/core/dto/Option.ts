@@ -1,4 +1,4 @@
 export interface Option {
-    value: string;
-    label: string;
+    value: string | undefined;
+    label: string | undefined;
 }

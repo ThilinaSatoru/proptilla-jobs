@@ -8,8 +8,8 @@ import {City} from "@/app/core/dto/City";
 import {Option} from "@/app/core/dto/Option";
 import {Website} from "@/app/core/dto/Website";
 
-const connectorOptions: Option[] = [];
-const cityOptions: Option[] = [];
+let connectorOptions: Option[] = [];
+let cityOptions: Option[] = [];
 const job_classes: Option[] = [
   {value: "AGENT", label: "AGENT"},
   {value: "PROPERTY", label: "PROPERTY"}
@@ -70,6 +70,7 @@ export default function Create() {
   useEffect(() => {
     fetchCityOptions().then(v => {
       if (cities) {
+        cityOptions = [];
         cities.forEach(city => {
           const newData: Option = {value: city.code, label: city.name};
           cityOptions.push(newData)
@@ -77,6 +78,7 @@ export default function Create() {
       }
 
       if (websites) {
+        connectorOptions = [];
         websites.forEach(con => {
           const newData: Option = {value: con.refNo, label: con.refNo};
           connectorOptions.push(newData)
