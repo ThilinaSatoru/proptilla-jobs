@@ -10,7 +10,6 @@ import {Website} from "@/app/core/dto/Website";
 
 const connectorOptions: Option[] = [];
 const cityOptions: Option[] = [];
-const REACT_APP_API_URL: string = "http://localhost:8081";
 const job_classes: Option[] = [
   {value: "AGENT", label: "AGENT"},
   {value: "PROPERTY", label: "PROPERTY"}
@@ -31,8 +30,8 @@ export default function Create() {
 
   const [isSubmit, setSubmit] = useState(false);
   const fetcher = (url: string) => fetch(url).then((res) => res.json());
-  const {data: cityData} = useSWR(REACT_APP_API_URL + '/api/v1/cities', fetcher);
-  const {data: conData} = useSWR(REACT_APP_API_URL + '/api/v1/connectors', fetcher);
+  const {data: cityData} = useSWR(process.env.NEXT_PUBLIC_API_URL + '/api/v1/cities', fetcher);
+  const {data: conData} = useSWR(process.env.NEXT_PUBLIC_API_URL + '/api/v1/connectors', fetcher);
 
   const [isTrue, setIsTrue] = useState(true);
   const [cities, setCities] = useState<City[]>([]);
@@ -146,12 +145,13 @@ export default function Create() {
 
   function handleSubmit(e: SyntheticEvent) {
     e.preventDefault();
-    setSubmit(!isSubmit);
-    console.log(save());
-    startTransition(() => {
-      // Refresh the current route and fetch new data from the server without
-      // losing client-side browser or React state.
-      router.refresh();
+    save().then(r => {
+      startTransition(() => {
+        // Refresh the current route and fetch new data from the server without
+        // losing client-side browser or React state.
+        router.refresh();
+        setModal(false);
+      });
     });
   }
 
