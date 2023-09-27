@@ -1,4 +1,4 @@
-import {Website} from "@/app/core/dto/Website";
+import {Agent} from "@/app/core/dto/Agent";
 import {City} from "@/app/core/dto/City";
 
 
@@ -11,8 +11,7 @@ export class Job {
         public active: boolean,
         public createdOn: Date,
         public lastExecutedOn: Date,
-        public website?: Website,
+        public agent?: Agent,
         public cities?: City[]
-
     ) {}
 }

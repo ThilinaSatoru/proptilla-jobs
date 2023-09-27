@@ -6,7 +6,7 @@ import {ChangeEvent, SyntheticEvent, useCallback, useEffect, useState, useTransi
 import {MdCancelScheduleSend} from "react-icons/md";
 import {City} from "@/app/core/dto/City";
 import {Option} from "@/app/core/dto/Option";
-import {Website} from "@/app/core/dto/Website";
+import {Agent} from "@/app/core/dto/Agent";
 
 let connectorOptions: Option[] = [];
 let cityOptions: Option[] = [];
@@ -35,7 +35,7 @@ export default function Create() {
 
   const [isTrue, setIsTrue] = useState(true);
   const [cities, setCities] = useState<City[]>([]);
-  const [websites, setWebsites] = useState<Website[]>([]);
+  const [websites, setWebsites] = useState<Agent[]>([]);
   const [jobState, setJobState] = useState({
     id: "",
     name: "",
@@ -44,7 +44,7 @@ export default function Create() {
     active: false,
     createdOn: "",
     lastExecutedOn: "",
-    website: new Website(null, "", "", "", "", ""),
+    agent: new Agent(null, "", "", "", "", ""),
     cities: [] as typeof City[],
   });
   const clearJobState = () => {
@@ -56,7 +56,7 @@ export default function Create() {
       active: false,
       createdOn: "",
       lastExecutedOn: "",
-      website: new Website(null, "", "", "", "READY", ""),
+      agent: new Agent(null, "", "", "", "READY", ""),
       cities: [] as typeof City[],
     });
   };
@@ -65,7 +65,7 @@ export default function Create() {
     setCities([]);
     setWebsites([]);
     setCities(cityData as City[]);
-    setWebsites(conData as Website[]);
+    setWebsites(conData as Agent[]);
   }, [cityData, conData]);
   useEffect(() => {
     fetchCityOptions().then(v => {
@@ -113,7 +113,7 @@ export default function Create() {
 
     setJobState({
       ...jobState,
-      website: new Website(null, "", "", label, "READY", ""),
+      agent: new Agent(null, "", "", label, "READY", ""),
     });
 
     console.log(selectedOption)

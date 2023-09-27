@@ -1,4 +1,4 @@
-export class Website {
+export class Agent {
     constructor(
         public id: number | null,
         public name: string,
@@ -6,5 +6,6 @@ export class Website {
         public refNo: string,
         public status: string,
         public logo: string
-    ) {}
+    ) {
+    }
 }

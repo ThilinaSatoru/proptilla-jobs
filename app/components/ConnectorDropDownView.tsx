@@ -15,8 +15,8 @@ export default function ConnectorDropDownView(job: Job) {
         <div>
             <button className="cursor" onClick={handleChange}>
                 <span
-                    className={`${job.website?.refNo ? 'bg-green-500' : 'bg-rose-500'} text-white px-5 py-1 rounded-full`}>
-                  {job.website?.refNo ? job.website?.refNo : "null"}
+                    className={`${job.agent?.refNo ? 'bg-green-500' : 'bg-rose-500'} text-white px-5 py-1 rounded-full`}>
+                  {job.agent?.refNo ? job.agent?.refNo : "null"}
                 </span>
             </button>
             <input
@@ -40,19 +40,19 @@ export default function ConnectorDropDownView(job: Job) {
                                 <div className="flex items-center space-x-4">
                                     <div className="flex-shrink-0">
                                         <img className="w-15 h-15 rounded-full"
-                                             src={job.website?.logo} alt="logo"/>
+                                             src={job.agent?.logo} alt="logo"/>
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium text-gray-900 truncate dark:text-white">
-                                            {job.website?.name}
+                                            {job.agent?.name}
                                         </p>
                                         <p className="text-sm text-gray-500 truncate dark:text-gray-400">
-                                            {job.website?.url}
+                                            {job.agent?.url}
                                         </p>
                                     </div>
                                     <div
                                         className="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">
-                                        {job.website?.refNo}
+                                        {job.agent?.refNo}
                                     </div>
                                 </div>
                             </li>

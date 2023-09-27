@@ -5,7 +5,7 @@ import useSWR from 'swr';
 import {ChangeEvent, SyntheticEvent, useCallback, useEffect, useState, useTransition} from "react";
 import {City} from "@/app/core/dto/City";
 import {Option} from "@/app/core/dto/Option";
-import {Website} from "@/app/core/dto/Website";
+import {Agent} from "@/app/core/dto/Agent";
 import {BiEdit} from "react-icons/bi";
 import {Job} from "@/app/core/dto/Job";
 
@@ -38,14 +38,14 @@ export default function Update(job: Job) {
 
     const [isTrue, setIsTrue] = useState(job.active);
     const [defaultConnector, setDefaultConnector] = useState<Option>({
-        value: job.website?.refNo,
-        label: job.website?.refNo
+        value: job.agent?.refNo,
+        label: job.agent?.refNo
     });
     const [defaultCities, setDefaultCities] = useState<Option[]>();
     const [defaultJobClass, setDefaultJobClass] = useState<Option>({value: job.jobClass, label: job.jobClass});
 
     const [cities, setCities] = useState<City[]>([]);
-    const [websites, setWebsites] = useState<Website[]>([]);
+    const [websites, setWebsites] = useState<Agent[]>([]);
     let cityList: City[] = [];
     const [jobState, setJobState] = useState({
         id: job.id,
@@ -55,7 +55,7 @@ export default function Update(job: Job) {
         active: job.active,
         createdOn: job.createdOn,
         lastExecutedOn: job.lastExecutedOn,
-        website: job.website,
+        agent: job.agent,
         cities: cityList as City[],
     });
 
@@ -101,7 +101,7 @@ export default function Update(job: Job) {
             active: false,
             createdOn: new Date,
             lastExecutedOn: new Date,
-            website: new Website(null, "", "", "", "READY", ""),
+            agent: new Agent(null, "", "", "", "READY", ""),
             cities: [] as City[],
         });
     };
@@ -110,7 +110,7 @@ export default function Update(job: Job) {
         setCities([]);
         setWebsites([]);
         setCities(cityData as City[]);
-        setWebsites(conData as Website[]);
+        setWebsites(conData as Agent[]);
     }, [cityData, conData]);
 
     useEffect(() => {
@@ -159,7 +159,7 @@ export default function Update(job: Job) {
 
         setJobState({
             ...jobState,
-            website: new Website(null, "", "", label, "READY", ""),
+            agent: new Agent(null, "", "", label, "READY", ""),
         });
 
         console.log(selectedOption)
@@ -203,7 +203,7 @@ export default function Update(job: Job) {
             active: false,
             createdOn: new Date,
             lastExecutedOn: new Date,
-            website: new Website(null, "", "", "", "READY", ""),
+            agent: new Agent(null, "", "", "", "READY", ""),
             cities: [] as City[],
         });
         do_update(job.id).then(r => {
