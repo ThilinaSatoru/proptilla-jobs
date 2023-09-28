@@ -39,7 +39,7 @@ export default function ConnectorDropDownView(job: Job) {
                             <li className="pb-3 sm:pb-4">
                                 <div className="flex items-center space-x-4">
                                     <div className="flex-shrink-0">
-                                        <img className="w-15 h-15 rounded-full"
+                                        <img className="w-10 h-10 rounded-full"
                                              src={job.agent?.logo} alt="logo"/>
                                     </div>
                                     <div className="flex-1 min-w-0">

@@ -27,7 +27,6 @@ export default function Update(job: Job) {
         setModal(!modal)
         if (!modal) {
             console.log(jobState);
-            // clearJobState();
         }
     }
 
@@ -41,11 +40,11 @@ export default function Update(job: Job) {
         value: job.agent?.refNo,
         label: job.agent?.refNo
     });
-    const [defaultCities, setDefaultCities] = useState<Option[]>();
+    const [selectedCities, setSelectedCities] = useState<Option[]>();
     const [defaultJobClass, setDefaultJobClass] = useState<Option>({value: job.jobClass, label: job.jobClass});
 
     const [cities, setCities] = useState<City[]>([]);
-    const [websites, setWebsites] = useState<Agent[]>([]);
+    const [agents, setAgents] = useState<Agent[]>([]);
     let cityList: City[] = [];
     const [jobState, setJobState] = useState({
         id: job.id,
@@ -62,35 +61,30 @@ export default function Update(job: Job) {
     useEffect(() => {
         let citySelectedOptions: Option[] = [];
 
-        setJobState({
-            ...jobState,
-            id: job.id,
-            name: job.name,
-            jobClass: job.jobClass,
-            cron: job.cron,
-            active: job.active,
-        });
-
         if (job.cities !== undefined) {
             cityList = job.cities;
             cityList.forEach(city => {
                 const newData: Option = {value: city.code, label: city.name};
                 citySelectedOptions.push(newData);
             })
-            setDefaultCities(citySelectedOptions);
+            setSelectedCities(citySelectedOptions);
             setJobState({
-                ...jobState,
+                id: job.id,
+                name: job.name,
+                jobClass: job.jobClass,
+                cron: job.cron,
+                active: job.active,
+                createdOn: job.createdOn,
+                lastExecutedOn: job.lastExecutedOn,
+                agent: job.agent,
                 cities: citySelectedOptions as [],
             });
-            // console.log(defaultCities);
+            setIsTrue(job.active);
         }
-
-    }, [job, modal]);
+    }, [modal]);
 
     const clearJobState = () => {
-        // cityOptions = [];
-        // connectorOptions = [];
-        setDefaultCities([]);
+        setSelectedCities([]);
         setDefaultConnector({value: "", label: ""});
         setDefaultJobClass({value: "", label: ""});
         setJobState({
@@ -108,9 +102,9 @@ export default function Update(job: Job) {
 
     const fetchCityOptions = useCallback(async () => {
         setCities([]);
-        setWebsites([]);
+        setAgents([]);
         setCities(cityData as City[]);
-        setWebsites(conData as Agent[]);
+        setAgents(conData as Agent[]);
     }, [cityData, conData]);
 
     useEffect(() => {
@@ -123,52 +117,48 @@ export default function Update(job: Job) {
                 })
             }
 
-            if (websites) {
+            if (agents) {
                 connectorOptions = [];
-                websites.forEach(con => {
+                agents.forEach(con => {
                     const newData: Option = {value: con.refNo, label: con.refNo};
                     connectorOptions.push(newData)
                 })
             }
         });
-    }, [cities, fetchCityOptions, websites])
+    }, [cities, fetchCityOptions, agents])
 
     const handleCitiesSelect = (selectedOption: any) => {
-        let selected_cities: City[] = []
+        let selected_cities: City[] = [];
+        setSelectedCities([]);
         selectedOption.forEach((selected: any) => {
-            selected_cities.push(new City(null, selected.label, selected.value))
+            selected_cities.push(new City(null, selected.label, selected.value));
         })
+        setSelectedCities(selectedOption);
         setJobState({
             ...jobState,
             cities: selected_cities as [],
         });
-        console.log(selected_cities)
     };
     const handleJobClassSelect = (selectedOption: any) => {
         let label = selectedOption ? selectedOption.label : "";
-
         setJobState({
             ...jobState,
             jobClass: label,
         });
-
-        console.log(selectedOption)
     };
     const handleWebsiteSelect = (selectedOption: any) => {
         let label = selectedOption ? selectedOption.label : "";
-
         setJobState({
             ...jobState,
             agent: new Agent(null, "", "", label, "READY", ""),
         });
-
-        console.log(selectedOption)
     };
     const handleRadioChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setIsTrue(e.target.value === 'true');
+        const {name, value} = e.target;
+        setIsTrue(value === 'true');
         setJobState({
             ...jobState,
-            active: isTrue,
+            active: value === 'true',
         });
     };
     const handleFormChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -181,31 +171,19 @@ export default function Update(job: Job) {
     };
 
     async function do_update(id: number | null) {
-        // await fetch(process.env.NEXT_PUBLIC_API_URL + `/api/v1/jobs/${id}`, {
-        //     method: "PUT",
-        //     headers: {
-        //         'Content-Type': 'application/json'
-        //     },
-        //     body: JSON.stringify(jobState),
-        // });
-        // console.log(JSON.stringify(jobState));
+        await fetch(process.env.NEXT_PUBLIC_API_URL + `/api/v1/jobs/${id}`, {
+            method: "PUT",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(jobState),
+        });
+        console.log(JSON.stringify(jobState));
         console.log(jobState);
     }
 
     function handleSubmit(e: SyntheticEvent) {
         e.preventDefault();
-        setJobState({
-            ...jobState,
-            id: 0,
-            name: "",
-            jobClass: "",
-            cron: "",
-            active: false,
-            createdOn: new Date,
-            lastExecutedOn: new Date,
-            agent: new Agent(null, "", "", "", "READY", ""),
-            cities: [] as City[],
-        });
         do_update(job.id).then(r => {
             clearJobState();
             startTransition(() => {
@@ -283,7 +261,7 @@ export default function Update(job: Job) {
                                 Cities
                             </label>
                             <Select
-                                defaultValue={defaultCities}
+                                defaultValue={selectedCities}
                                 id="Cities"
                                 instanceId="Cities"
                                 isMulti
@@ -291,25 +269,26 @@ export default function Update(job: Job) {
                                 isSearchable={true}
                                 className="basic-multi-select"
                                 options={cityOptions}
+                                value={selectedCities}
                                 onChange={handleCitiesSelect}
                                 placeholder="Cities"
                             />
                         </div>
                         <div className="form-control">
-                            <label htmlFor="website" className="label font-bold">
+                            <label htmlFor="agent" className="label font-bold">
                                 Website
                             </label>
                             <Select
                                 defaultValue={defaultConnector}
-                                id="website"
-                                instanceId="website"
+                                id="agent"
+                                instanceId="agent"
                                 className="basic-single"
                                 classNamePrefix="select"
                                 isDisabled={false}
                                 isClearable={true}
                                 isRtl={false}
                                 isSearchable={true}
-                                name="website"
+                                name="agent"
                                 options={connectorOptions}
                                 onChange={handleWebsiteSelect}
                             />
@@ -322,12 +301,12 @@ export default function Update(job: Job) {
                                     value="true"
                                     checked={isTrue}
                                     onChange={handleRadioChange}
-                                    id="radioDefault1"
+                                    id="Active"
                                     name="active"
                                     className="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300  bg-white checked:bg-green-500 checked:border-green-500 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
                                 />
                                 <label
-                                    htmlFor="radioDefault1"
+                                    htmlFor="Active"
                                     className="inline-block tet-gray-800"
                                 >
                                     Active
@@ -339,12 +318,12 @@ export default function Update(job: Job) {
                                     value="false"
                                     checked={!isTrue}
                                     onChange={handleRadioChange}
-                                    id="radioDefault2"
+                                    id="Inactive"
                                     name="active"
                                     className="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300  bg-white checked:bg-green-500 checked:border-green-500 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
                                 />
                                 <label
-                                    htmlFor="radioDefault2"
+                                    htmlFor="Inactive"
                                     className="inline-block tet-gray-800"
                                 >
                                     Inactive

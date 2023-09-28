@@ -10,6 +10,7 @@ import {Agent} from "@/app/core/dto/Agent";
 
 let connectorOptions: Option[] = [];
 let cityOptions: Option[] = [];
+
 const job_classes: Option[] = [
   {value: "AGENT", label: "AGENT"},
   {value: "PROPERTY", label: "PROPERTY"}
@@ -33,9 +34,10 @@ export default function Create() {
   const {data: cityData} = useSWR(process.env.NEXT_PUBLIC_API_URL + '/api/v1/cities', fetcher);
   const {data: conData} = useSWR(process.env.NEXT_PUBLIC_API_URL + '/api/v1/connectors', fetcher);
 
+  const [selectedCities, setSelectedCities] = useState<Option[]>();
   const [isTrue, setIsTrue] = useState(true);
   const [cities, setCities] = useState<City[]>([]);
-  const [websites, setWebsites] = useState<Agent[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [jobState, setJobState] = useState({
     id: "",
     name: "",
@@ -48,6 +50,7 @@ export default function Create() {
     cities: [] as typeof City[],
   });
   const clearJobState = () => {
+    setSelectedCities([]);
     setJobState({
       id: "",
       name: "",
@@ -63,10 +66,11 @@ export default function Create() {
 
   const fetchCityOptions = useCallback(async () => {
     setCities([]);
-    setWebsites([]);
+    setAgents([]);
     setCities(cityData as City[]);
-    setWebsites(conData as Agent[]);
+    setAgents(conData as Agent[]);
   }, [cityData, conData]);
+
   useEffect(() => {
     fetchCityOptions().then(v => {
       if (cities) {
@@ -77,26 +81,27 @@ export default function Create() {
         })
       }
 
-      if (websites) {
+      if (agents) {
         connectorOptions = [];
-        websites.forEach(con => {
+        agents.forEach(con => {
           const newData: Option = {value: con.refNo, label: con.refNo};
           connectorOptions.push(newData)
         })
       }
     });
-  }, [cities, fetchCityOptions, websites])
+  }, [cities, fetchCityOptions, agents])
 
   const handleCitiesSelect = (selectedOption: any) => {
     let selected_cities: City[] = []
+    setSelectedCities([]);
     selectedOption.forEach((selected: any) => {
       selected_cities.push(new City(null, selected.label, selected.value))
     })
+    setSelectedCities(selectedOption);
     setJobState({
       ...jobState,
       cities: selected_cities as [],
     });
-    console.log(selected_cities)
   };
   const handleJobClassSelect = (selectedOption: any) => {
     let label = selectedOption ? selectedOption.label : "";
@@ -105,8 +110,6 @@ export default function Create() {
       ...jobState,
       jobClass: label,
     });
-
-    console.log(selectedOption)
   };
   const handleWebsiteSelect = (selectedOption: any) => {
     let label = selectedOption ? selectedOption.label : "";
@@ -115,14 +118,13 @@ export default function Create() {
       ...jobState,
       agent: new Agent(null, "", "", label, "READY", ""),
     });
-
-    console.log(selectedOption)
   };
   const handleRadioChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setIsTrue(e.target.value === 'true');
+    const {name, value} = e.target;
+    setIsTrue(value === 'true');
     setJobState({
       ...jobState,
-      active: isTrue,
+      active: value === 'true',
     });
   };
   const handleFormChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -135,7 +137,7 @@ export default function Create() {
   };
 
   async function save() {
-    await fetch("http://localhost:8081/api/v1/jobs", {
+    await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/v1/jobs", {
       method: "POST",
       headers: {
         'Content-Type': 'application/json'
@@ -194,22 +196,6 @@ export default function Create() {
               />
             </div>
             <div className="form-control">
-              <label htmlFor="selectWarna" className="label font-bold">
-                Cities
-              </label>
-              <Select
-                  id="selectWarna"
-                  instanceId="selectWarna"
-                  isMulti
-                  name="colors"
-                  className="basic-multi-select"
-                  classNamePrefix="select"
-                  options={cityOptions}
-                  onChange={handleCitiesSelect}
-                  placeholder="Pilih Warna"
-              />
-            </div>
-            <div className="form-control">
               <label htmlFor="jobClass" className="label font-bold">
                 JobClass
               </label>
@@ -236,26 +222,43 @@ export default function Create() {
                   type="text"
                   name="cron"
                   id="cron"
-                value={jobState.cron}
-                onChange={handleFormChange}
-                className="border w-full px-5 py-3 focus:outline-none rounded-md"
-                placeholder="schedule"
+                  value={jobState.cron}
+                  onChange={handleFormChange}
+                  className="border w-full px-5 py-3 focus:outline-none rounded-md"
+                  placeholder="schedule"
               />
             </div>
             <div className="form-control">
-              <label htmlFor="website" className="label font-bold">
+              <label htmlFor="Cities" className="label font-bold">
+                Cities
+              </label>
+              <Select
+                  id="Cities"
+                  instanceId="Cities"
+                  isMulti
+                  name="Cities"
+                  isSearchable={true}
+                  className="basic-multi-select"
+                  options={cityOptions}
+                  value={selectedCities}
+                  onChange={handleCitiesSelect}
+                  placeholder="Cities"
+              />
+            </div>
+            <div className="form-control">
+              <label htmlFor="agent" className="label font-bold">
                 Website
               </label>
               <Select
-                  id="selectWebsites"
-                  instanceId="selectWebsites"
+                  id="agent"
+                  instanceId="agent"
                   className="basic-single"
                   classNamePrefix="select"
                   isDisabled={false}
                   isClearable={true}
                   isRtl={false}
                   isSearchable={true}
-                  name="selectWebsites"
+                  name="agent"
                   options={connectorOptions}
                   onChange={handleWebsiteSelect}
               />
@@ -268,12 +271,12 @@ export default function Create() {
                     value="true"
                     checked={isTrue}
                     onChange={handleRadioChange}
-                    id="radioDefault1"
+                    id="Active"
                     name="active"
                     className="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300  bg-white checked:bg-green-500 checked:border-green-500 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
                 />
                 <label
-                    htmlFor="radioDefault1"
+                    htmlFor="Active"
                     className="inline-block tet-gray-800"
                 >
                   Active
@@ -285,12 +288,12 @@ export default function Create() {
                     value="false"
                     checked={!isTrue}
                     onChange={handleRadioChange}
-                    id="radioDefault2"
+                    id="Inactive"
                     name="active"
                     className="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300  bg-white checked:bg-green-500 checked:border-green-500 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
                 />
                 <label
-                    htmlFor="radioDefault2"
+                    htmlFor="Inactive"
                     className="inline-block tet-gray-800"
                 >
                   Inactive
